@@ -18,8 +18,6 @@ type
         x, y: byte;
     end;
     location = array [1..255] of cell;
-var
-    lngth : Integer;
 
 procedure
     SetInitialLocationArray(var c: location);
@@ -34,7 +32,7 @@ begin
 end;
 
 procedure
-    SetInitialCoordinates(var c: location);
+    SetInitialCoordinates(var c: location; lngth: word);
 var
     i: byte;
 begin
@@ -48,7 +46,7 @@ begin
 end;
 
 procedure
-    WriteInitialSnake(var c: location);
+    WriteInitialSnake(var c: location; lngth: word);
 var
     i: byte;
 begin
@@ -86,7 +84,7 @@ begin
 end;
 
 function
-    SnakeOverlap(var c: location; x, y: byte): boolean;
+    SnakeOverlap(var c: location; lngth, x, y: byte): boolean;
 var
     i: byte;
 begin
@@ -109,7 +107,7 @@ begin
 end;
 
 procedure
-    ShowingFly(var c: location; var FlyExist: boolean; var FlyX, FlyY: byte);
+    ShowingFly(var c: location; lngth: word; var FlyExist: boolean; var FlyX, FlyY: byte);
 begin
     if not FlyExist then
         begin
@@ -117,7 +115,7 @@ begin
             begin
             FlyX := (random(ScreenWidth)) + 1;
             FlyY := (random(ScreenHeight)) + 1;
-            if SnakeOverlap(c, FlyX, FlyY) then
+            if SnakeOverlap(c, lngth, FlyX, FlyY) then
             else
                 break;
             if (((FlyX = ScreenWidth) or (FlyX = ScreenWidth - 1)) and (FlyY = 1)) or ((FlyX = ScreenWidth) and (FlyY = ScreenHeight)) then
@@ -151,7 +149,7 @@ begin
 end;
 
 procedure
-    ShowingApple(var c: location; var AplExist: boolean; var AplCount: integer; var AplX, AplY: byte; count, FlyX, FlyY: byte);
+    ShowingApple(var c: location; lngth: word; var AplExist: boolean; var AplCount: integer; var AplX, AplY: byte; count, FlyX, FlyY: byte);
 begin
     if (not AplExist) and (count mod 10 = 9) and (AplCount = 0) then
         begin                                   {Apl appears 1 fly bef. speedup}
@@ -159,7 +157,7 @@ begin
             begin
             AplX := (random(ScreenWidth)) + 1;
             AplY := (random(ScreenHeight)) + 1;
-            if SnakeOverlap(c, AplX, AplY) or FlyOverlap(FlyX, FlyY, AplX, AplY) then
+            if SnakeOverlap(c, lngth, AplX, AplY) or FlyOverlap(FlyX, FlyY, AplX, AplY) then
             else
                 break;
             if (((AplX = ScreenWidth) or (AplX = ScreenWidth - 1)) and (AplY = 1)) or ((AplX = ScreenWidth) and (AplY = ScreenHeight)) then
@@ -202,7 +200,7 @@ begin
 end;
 
 procedure 
-    MovingSnake(var c: location; var growth: boolean; dx, dy: shortint);
+    MovingSnake(var c: location; var lngth: word; var growth: boolean; dx, dy: shortint);
 var
     i: byte;
 begin
@@ -230,7 +228,7 @@ begin
 end;
 
 procedure
-    TransScreenMoveCheck(var c: location);
+    TransScreenMoveCheck(var c: location; lngth: word);
 begin
     if c[lngth].x > ScreenWidth then           
         c[lngth].x := 1;
@@ -243,7 +241,7 @@ begin
 end;
 
 procedure
-    FlyCheck(var c: location; var FlyExist, growth: boolean; var count: byte; FlyX, FlyY: byte; var score: word);
+    FlyCheck(var c: location; lngth: word; var FlyExist, growth: boolean; var count: byte; FlyX, FlyY: byte; var score: word);
 begin
     if (c[lngth].x = FlyX) and (c[lngth].y = FlyY) then
         begin
@@ -255,7 +253,7 @@ begin
 end;
 
 procedure
-    AppleCheck(var c: location; var AplExist, growth: boolean; count: byte; var AplX, AplY: byte; var score: word);
+    AppleCheck(var c: location; lngth: word; var AplExist, growth: boolean; count: byte; var AplX, AplY: byte; var score: word);
 begin
     if (c[lngth].x = AplX) and (c[lngth].y = AplY) then
         begin
@@ -268,7 +266,7 @@ begin
 end;
 
 procedure
-    SelfCollisionCheck(var c: location; score: word; ScDigit: byte);
+    SelfCollisionCheck(var c: location; lngth, score: word; ScDigit: byte);
 var
     i, x, y: byte;
 begin
@@ -333,7 +331,7 @@ end;
 
 var
     c: location;
-    score, DelayTime: word;
+    lngth, score, DelayTime: word;
     dx, dy: shortint;
     FlyX, FlyY, AplX, AplY, count, PrevCount, ScDigit: byte;
     AplCount: integer;
@@ -352,18 +350,18 @@ begin
     score := 0;
     growth := false;
     SetInitialLocationArray(c);
-    SetInitialCoordinates(c);
-    WriteInitialSnake(c);
+    SetInitialCoordinates(c, lngth);
+    WriteInitialSnake(c, lngth);
     while true do
         begin
-        ShowingFly(c, FlyExist, FlyX, FlyY);
-        ShowingApple(c, AplExist, AplCount, AplX, AplY, count, FlyX, FlyY);
+        ShowingFly(c, lngth, FlyExist, FlyX, FlyY);
+        ShowingApple(c, lngth, AplExist, AplCount, AplX, AplY, count, FlyX, FlyY);
         ProcessingInput(dx, dy);
-        MovingSnake(c, growth, dx, dy);
-        TransScreenMoveCheck(c);         {Checks}
-        FlyCheck(c, FlyExist, growth, count, FlyX, FlyY, score);
-        AppleCheck(c, AplExist, growth, count, AplX, AplY, score);
-        SelfCollisionCheck(c, score, ScDigit);
+        MovingSnake(c, lngth, growth, dx, dy);
+        TransScreenMoveCheck(c, lngth);         {Checks}
+        FlyCheck(c, lngth, FlyExist, growth, count, FlyX, FlyY, score);
+        AppleCheck(c, lngth, AplExist, growth, count, AplX, AplY, score);
+        SelfCollisionCheck(c, lngth, score, ScDigit);
         if (c[lngth].x = ScreenWidth) and (c[lngth].y = ScreenHeight) then
         else                                    {Avoiding the last screen pixel}
             begin
