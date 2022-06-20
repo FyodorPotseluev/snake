@@ -17,7 +17,10 @@ type
     cell = record
         x, y: byte;
     end;
-    location = array [1..255] of cell;
+    location = record
+        map : array [1..255] of cell;
+        lngth : Integer;
+    end;
 
 procedure
     SetInitialLocationArray(var c: location);
@@ -26,33 +29,33 @@ var
 begin
     for i := 1 to 255 do
         begin
-        c[i].x := 0;
-        c[i].y := 0;
+        c.map[i].x := 0;
+        c.map[i].y := 0;
         end
 end;
 
 procedure
-    SetInitialCoordinates(var c: location; lngth: word);
+    SetInitialCoordinates(var c: location);
 var
     i: byte;
 begin
-    c[1].x := ScreenWidth div 2;            
-    c[1].y := ScreenHeight div 2;
-    for i := 2 to lngth do
+    c.map[1].x := ScreenWidth div 2;            
+    c.map[1].y := ScreenHeight div 2;
+    for i := 2 to c.lngth do
         begin
-        c[i].x := c[i-1].x + 1;
-        c[i].y := c[i-1].y
+        c.map[i].x := c.map[i-1].x + 1;
+        c.map[i].y := c.map[i-1].y
         end
 end;
 
 procedure
-    WriteInitialSnake(var c: location; lngth: word);
+    WriteInitialSnake(var c: location);
 var
     i: byte;
 begin
-    for i := 1 to lngth do
+    for i := 1 to c.lngth do
         begin
-        GotoXY(c[i].x, c[i].y);
+        GotoXY(c.map[i].x, c.map[i].y);
         TextColoR(LightGreen);
         write(snk)
         end
@@ -84,13 +87,13 @@ begin
 end;
 
 function
-    SnakeOverlap(var c: location; lngth, x, y: byte): boolean;
+    SnakeOverlap(var c: location; x, y: byte): boolean;
 var
     i: byte;
 begin
-    for i := 1 to lngth do
+    for i := 1 to c.lngth do
         begin
-        if (x = c[i].x) and (y = c[i].y) then
+        if (x = c.map[i].x) and (y = c.map[i].y) then
             SnakeOverlap := true
         else
             SnakeOverlap := false
@@ -107,7 +110,7 @@ begin
 end;
 
 procedure
-    ShowingFly(var c: location; lngth: word; var FlyExist: boolean; var FlyX, FlyY: byte);
+    ShowingFly(var c: location; var FlyExist: boolean; var FlyX, FlyY: byte);
 begin
     if not FlyExist then
         begin
@@ -115,7 +118,7 @@ begin
             begin
             FlyX := (random(ScreenWidth)) + 1;
             FlyY := (random(ScreenHeight)) + 1;
-            if SnakeOverlap(c, lngth, FlyX, FlyY) then
+            if SnakeOverlap(c, FlyX, FlyY) then
             else
                 break;
             if (((FlyX = ScreenWidth) or (FlyX = ScreenWidth - 1)) and (FlyY = 1)) or ((FlyX = ScreenWidth) and (FlyY = ScreenHeight)) then
@@ -149,7 +152,7 @@ begin
 end;
 
 procedure
-    ShowingApple(var c: location; lngth: word; var AplExist: boolean; var AplCount: integer; var AplX, AplY: byte; count, FlyX, FlyY: byte);
+    ShowingApple(var c: location; var AplExist: boolean; var AplCount: integer; var AplX, AplY: byte; count, FlyX, FlyY: byte);
 begin
     if (not AplExist) and (count mod 10 = 9) and (AplCount = 0) then
         begin                                   {Apl appears 1 fly bef. speedup}
@@ -157,7 +160,7 @@ begin
             begin
             AplX := (random(ScreenWidth)) + 1;
             AplY := (random(ScreenHeight)) + 1;
-            if SnakeOverlap(c, lngth, AplX, AplY) or FlyOverlap(FlyX, FlyY, AplX, AplY) then
+            if SnakeOverlap(c, AplX, AplY) or FlyOverlap(FlyX, FlyY, AplX, AplY) then
             else
                 break;
             if (((AplX = ScreenWidth) or (AplX = ScreenWidth - 1)) and (AplY = 1)) or ((AplX = ScreenWidth) and (AplY = ScreenHeight)) then
@@ -200,50 +203,50 @@ begin
 end;
 
 procedure 
-    MovingSnake(var c: location; var lngth: word; var growth: boolean; dx, dy: shortint);
+    MovingSnake(var c: location; var growth: boolean; dx, dy: shortint);
 var
     i: byte;
 begin
     if growth then                              {Bigger snake option}
         begin
-        lngth := lngth + 1;                     {Keep tale. Increase length}
-        c[lngth].x := c[lngth-1].x + dx;        {+1 step (bigger snake)}
-        c[lngth].y := c[lngth-1].y + dy;
+        c.lngth := c.lngth + 1;                     {Keep tale. Increase length}
+        c.map[c.lngth].x := c.map[c.lngth-1].x + dx;        {+1 step (bigger snake)}
+        c.map[c.lngth].y := c.map[c.lngth-1].y + dy;
         growth := false
         end
     else                                        {Same snake option}
         begin
-        if (c[lngth].x = ScreenWidth) and (c[lngth].y = ScreenHeight) then
+        if (c.map[c.lngth].x = ScreenWidth) and (c.map[c.lngth].y = ScreenHeight) then
         else                                    {Avoiding the last screen pixel}
-            GotoXY(c[1].x, c[1].y);             {Tale deleting}
+            GotoXY(c.map[1].x, c.map[1].y);             {Tale deleting}
         write(' ');
-        for i := 1 to lngth - 1 do              {Body moving}
+        for i := 1 to c.lngth - 1 do              {Body moving}
             begin
-            c[i].x := c[i+1].x;
-            c[i].y := c[i+1].y;
+            c.map[i].x := c.map[i+1].x;
+            c.map[i].y := c.map[i+1].y;
             end;
-        c[lngth].x := c[lngth].x + dx;          {+1 step (same snake)}
-        c[lngth].y := c[lngth].y + dy
+        c.map[c.lngth].x := c.map[c.lngth].x + dx;          {+1 step (same snake)}
+        c.map[c.lngth].y := c.map[c.lngth].y + dy
         end
 end;
 
 procedure
-    TransScreenMoveCheck(var c: location; lngth: word);
+    TransScreenMoveCheck(var c: location);
 begin
-    if c[lngth].x > ScreenWidth then           
-        c[lngth].x := 1;
-    if c[lngth].x < 1 then
-        c[lngth].x := ScreenWidth;
-    if c[lngth].y > ScreenHeight then
-        c[lngth].y := 1;
-    if c[lngth].y < 1 then
-        c[lngth].y := ScreenHeight
+    if c.map[c.lngth].x > ScreenWidth then           
+        c.map[c.lngth].x := 1;
+    if c.map[c.lngth].x < 1 then
+        c.map[c.lngth].x := ScreenWidth;
+    if c.map[c.lngth].y > ScreenHeight then
+        c.map[c.lngth].y := 1;
+    if c.map[c.lngth].y < 1 then
+        c.map[c.lngth].y := ScreenHeight
 end;
 
 procedure
-    FlyCheck(var c: location; lngth: word; var FlyExist, growth: boolean; var count: byte; FlyX, FlyY: byte; var score: word);
+    FlyCheck(var c: location; var FlyExist, growth: boolean; var count: byte; FlyX, FlyY: byte; var score: word);
 begin
-    if (c[lngth].x = FlyX) and (c[lngth].y = FlyY) then
+    if (c.map[c.lngth].x = FlyX) and (c.map[c.lngth].y = FlyY) then
         begin
         FlyExist := false;
         growth := true;
@@ -253,9 +256,9 @@ begin
 end;
 
 procedure
-    AppleCheck(var c: location; lngth: word; var AplExist, growth: boolean; count: byte; var AplX, AplY: byte; var score: word);
+    AppleCheck(var c: location; var AplExist, growth: boolean; count: byte; var AplX, AplY: byte; var score: word);
 begin
-    if (c[lngth].x = AplX) and (c[lngth].y = AplY) then
+    if (c.map[c.lngth].x = AplX) and (c.map[c.lngth].y = AplY) then
         begin
         growth := true;
         AplExist := false;
@@ -266,13 +269,13 @@ begin
 end;
 
 procedure
-    SelfCollisionCheck(var c: location; lngth, score: word; ScDigit: byte);
+    SelfCollisionCheck(var c: location; score: word; ScDigit: byte);
 var
     i, x, y: byte;
 begin
-    for i := 1 to (lngth - 1) do
+    for i := 1 to (c.lngth - 1) do
         begin
-        if (c[i].x = c[lngth].x) and (c[i].y = c[lngth].y) then
+        if (c.map[i].x = c.map[c.lngth].x) and (c.map[i].y = c.map[c.lngth].y) then
             begin
             clrscr;
             x := (ScreenWidth - length(GameOverMessage)) div 2;
@@ -331,7 +334,7 @@ end;
 
 var
     c: location;
-    lngth, score, DelayTime: word;
+    score, DelayTime: word;
     dx, dy: shortint;
     FlyX, FlyY, AplX, AplY, count, PrevCount, ScDigit: byte;
     AplCount: integer;
@@ -339,7 +342,7 @@ var
 begin
     randomize;
     clrscr;
-    lngth := 3;
+    c.lngth := 3;
     dx := 1;                                    {Set initial moving direction}
     dy := 0;
     DelayTime := InitialDelayTime;
@@ -350,22 +353,22 @@ begin
     score := 0;
     growth := false;
     SetInitialLocationArray(c);
-    SetInitialCoordinates(c, lngth);
-    WriteInitialSnake(c, lngth);
+    SetInitialCoordinates(c);
+    WriteInitialSnake(c);
     while true do
         begin
-        ShowingFly(c, lngth, FlyExist, FlyX, FlyY);
-        ShowingApple(c, lngth, AplExist, AplCount, AplX, AplY, count, FlyX, FlyY);
+        ShowingFly(c, FlyExist, FlyX, FlyY);
+        ShowingApple(c, AplExist, AplCount, AplX, AplY, count, FlyX, FlyY);
         ProcessingInput(dx, dy);
-        MovingSnake(c, lngth, growth, dx, dy);
-        TransScreenMoveCheck(c, lngth);         {Checks}
-        FlyCheck(c, lngth, FlyExist, growth, count, FlyX, FlyY, score);
-        AppleCheck(c, lngth, AplExist, growth, count, AplX, AplY, score);
-        SelfCollisionCheck(c, lngth, score, ScDigit);
-        if (c[lngth].x = ScreenWidth) and (c[lngth].y = ScreenHeight) then
+        MovingSnake(c, growth, dx, dy);
+        TransScreenMoveCheck(c);         {Checks}
+        FlyCheck(c, FlyExist, growth, count, FlyX, FlyY, score);
+        AppleCheck(c, AplExist, growth, count, AplX, AplY, score);
+        SelfCollisionCheck(c, score, ScDigit);
+        if (c.map[c.lngth].x = ScreenWidth) and (c.map[c.lngth].y = ScreenHeight) then
         else                                    {Avoiding the last screen pixel}
             begin
-            GotoXY(c[lngth].x, c[lngth].y);     {Writing first snake's cell}
+            GotoXY(c.map[c.lngth].x, c.map[c.lngth].y);     {Writing first snake's cell}
             TextColor(LightGreen);
             write(snk)
             end;
