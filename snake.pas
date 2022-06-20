@@ -17,8 +17,9 @@ type
     cell = record
         x, y: byte;
     end;
+    cellarray = array [1..255] of cell;
     location = record
-        map : array [1..255] of cell;
+        map : cellarray;
         lngth : Integer;
     end;
 
@@ -38,13 +39,15 @@ procedure
     SetInitialCoordinates(var c: location);
 var
     i: byte;
+    map : ^cellarray;
 begin
-    c.map[1].x := ScreenWidth div 2;            
-    c.map[1].y := ScreenHeight div 2;
+    map := @c.map;
+    map^[1].x := ScreenWidth div 2;            
+    map^[1].y := ScreenHeight div 2;
     for i := 2 to c.lngth do
         begin
-        c.map[i].x := c.map[i-1].x + 1;
-        c.map[i].y := c.map[i-1].y
+        map^[i].x := map^[i-1].x + 1;
+        map^[i].y := map^[i-1].y
         end
 end;
 
@@ -206,41 +209,46 @@ procedure
     MovingSnake(var c: location; var growth: boolean; dx, dy: shortint);
 var
     i: byte;
+    map : ^cellarray;
 begin
+    map := @c.map;
     if growth then                              {Bigger snake option}
         begin
         c.lngth := c.lngth + 1;                     {Keep tale. Increase length}
-        c.map[c.lngth].x := c.map[c.lngth-1].x + dx;        {+1 step (bigger snake)}
-        c.map[c.lngth].y := c.map[c.lngth-1].y + dy;
+        map^[c.lngth].x := map^[c.lngth-1].x + dx;        {+1 step (bigger snake)}
+        map^[c.lngth].y := map^[c.lngth-1].y + dy;
         growth := false
         end
     else                                        {Same snake option}
         begin
-        if (c.map[c.lngth].x = ScreenWidth) and (c.map[c.lngth].y = ScreenHeight) then
+        if (map^[c.lngth].x = ScreenWidth) and (map^[c.lngth].y = ScreenHeight) then
         else                                    {Avoiding the last screen pixel}
-            GotoXY(c.map[1].x, c.map[1].y);             {Tale deleting}
+            GotoXY(map^[1].x, map^[1].y);             {Tale deleting}
         write(' ');
         for i := 1 to c.lngth - 1 do              {Body moving}
             begin
-            c.map[i].x := c.map[i+1].x;
-            c.map[i].y := c.map[i+1].y;
+            map^[i].x := map^[i+1].x;
+            map^[i].y := map^[i+1].y;
             end;
-        c.map[c.lngth].x := c.map[c.lngth].x + dx;          {+1 step (same snake)}
-        c.map[c.lngth].y := c.map[c.lngth].y + dy
+        map^[c.lngth].x := map^[c.lngth].x + dx;          {+1 step (same snake)}
+        map^[c.lngth].y := map^[c.lngth].y + dy
         end
 end;
 
 procedure
     TransScreenMoveCheck(var c: location);
+var
+    map : ^cellarray;
 begin
-    if c.map[c.lngth].x > ScreenWidth then           
-        c.map[c.lngth].x := 1;
-    if c.map[c.lngth].x < 1 then
-        c.map[c.lngth].x := ScreenWidth;
-    if c.map[c.lngth].y > ScreenHeight then
-        c.map[c.lngth].y := 1;
-    if c.map[c.lngth].y < 1 then
-        c.map[c.lngth].y := ScreenHeight
+    map := @c.map;
+    if map^[c.lngth].x > ScreenWidth then           
+        map^[c.lngth].x := 1;
+    if map^[c.lngth].x < 1 then
+        map^[c.lngth].x := ScreenWidth;
+    if map^[c.lngth].y > ScreenHeight then
+        map^[c.lngth].y := 1;
+    if map^[c.lngth].y < 1 then
+        map^[c.lngth].y := ScreenHeight
 end;
 
 procedure
